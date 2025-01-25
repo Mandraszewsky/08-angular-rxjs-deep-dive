@@ -1,6 +1,6 @@
 import { Component, DestroyRef, OnInit, effect, inject, signal } from '@angular/core';
 import { toObservable, toSignal } from '@angular/core/rxjs-interop';
-import { interval, map } from 'rxjs';
+import { interval, map, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-root',
@@ -16,10 +16,10 @@ export class AppComponent implements OnInit {
 
   //convert observable to signal:
   interval$ = interval(1000);
-  intervalSignal = toSignal(this.interval$, {initialValue: 0}); //overwrite initial value coz observable dont have initial value
+  intervalSignal = toSignal(this.interval$, { initialValue: 0 }); //overwrite initial value coz observable dont have initial value
 
   //signals:
-  constructor(){
+  constructor() {
     // effect(() => {
     //   console.log(`Clicked button ${this.clickCount()} times.`)
     // });
@@ -45,11 +45,35 @@ export class AppComponent implements OnInit {
     //   next: (value) => console.log(`Clicked button ${this.clickCount()} times.`)
     // });
 
-    //using converted observable to signal:
+    //using custom observable:
+    this.customInterval$.subscribe({
+      next: (value) => console.log(value),
+      complete: () => console.log("Completed!"),
+      error: (error) => console.log(error),
+    });
+
   }
 
   //signals:
-  onClick(){
+  onClick() {
     this.clickCount.update(prevCount => prevCount + 1);
   }
+
+  // Creating a custom observable:
+  customInterval$ = new Observable((subscriber) => {
+    let timesExecuted = 0;
+
+    const interval = setInterval(() => {
+      //subscriber.error();
+      if (timesExecuted > 3) {
+        clearInterval(interval);
+        subscriber.complete();
+        return;
+      }
+
+      console.log('Emitting new value...');
+      subscriber.next({ message: 'New value' });
+      timesExecuted++;
+    }, 2000);
+  });
 }
